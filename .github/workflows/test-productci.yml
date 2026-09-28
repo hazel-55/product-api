@@ -1,0 +1,82 @@
+name: Test Product API
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      mongodb:
+        image: mongo:8
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.adminCommand({ ping: 1 }).ok'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      PORT: 3000
+      MONGO_URI: mongodb://127.0.0.1:27017/product_ci
+
+    steps:
+      - name: Lấy mã nguồn
+        uses: actions/checkout@v6
+
+      - name: Cài Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Cài thư viện
+        run: npm ci
+
+      - name: Khởi động API
+        run: |
+          npm start > /tmp/product-api.log 2>&1 &
+          for i in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:3000/health > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/product-api.log
+          exit 1
+
+      - name: Thử healthcheck và tạo, đọc sản phẩm
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+
+          const base = 'http://127.0.0.1:3000';
+
+          const health = await fetch(`${base}/health`);
+          assert.equal(health.status, 200);
+          assert.equal((await health.json()).database, 'connected');
+
+          const created = await fetch(`${base}/api/products`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              pid: 'CI001',
+              pname: 'San pham test',
+              price: 100000,
+              quantity: 2
+            })
+          });
+          assert.equal(created.status, 201);
+
+          const found = await fetch(`${base}/api/products/CI001`);
+          assert.equal(found.status, 200);
+          assert.equal((await found.json()).pid, 'CI001');
+
+          console.log('CI đạt: healthcheck, tạo và đọc sản phẩm');
+          NODE
