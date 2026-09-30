@@ -85,6 +85,26 @@ jobs:
           console.log('CI Compose đạt: healthcheck và đủ Create, Read, Update, Delete');
           NODE
 
+      - name: Đăng nhập Docker Hub
+        if: ${{ success() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Đẩy image đã kiểm tra lên Docker Hub
+        if: ${{ success() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        run: |
+          IMAGE_NAME="${DOCKERHUB_USERNAME}/product-api"
+
+          docker tag product-api:1.0 "${IMAGE_NAME}:sha-${GITHUB_SHA}"
+          docker tag product-api:1.0 "${IMAGE_NAME}:latest"
+
+          docker push "${IMAGE_NAME}:sha-${GITHUB_SHA}"
+          docker push "${IMAGE_NAME}:latest"
+
       - name: Hiện log nếu có lỗi
         if: failure()
         run: |
@@ -94,3 +114,5 @@ jobs:
       - name: Dừng các container
         if: always()
         run: docker compose down
+
+      
