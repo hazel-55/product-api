@@ -20,7 +20,7 @@ services:
       start_period: 15s
 
   product-api:
-    image: hazel55/product-api:latest
+    image: ${PRODUCT_API_IMAGE:-hazel55/product-api:latest}
     container_name: product-api
     restart: unless-stopped
     ports:
