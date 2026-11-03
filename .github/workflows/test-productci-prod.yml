@@ -10,9 +10,14 @@ permissions:
 
 jobs:
   test-compose:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
 
     steps:
+      - name: Kiểm tra môi trường CI
+        run: |
+          cat /etc/os-release
+          uname -r
+    
       - name: Lấy mã nguồn
         uses: actions/checkout@v6
 
