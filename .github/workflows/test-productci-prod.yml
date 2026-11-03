@@ -47,7 +47,7 @@ jobs:
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               pid,
-              pname: 'San pham CI',
+              pname: 'Dien Thoai CI',
               price: 100000,
               quantity: 2
             })
@@ -60,7 +60,7 @@ jobs:
 
           const read = await fetch(`${base}/api/products/${pid}`);
           assert.equal(read.status, 200);
-          assert.equal((await read.json()).pname, 'San pham CI');
+          assert.equal((await read.json()).pname, 'Dien Thoai CI');
 
           const update = await fetch(`${base}/api/products/${pid}`, {
             method: 'PUT',
