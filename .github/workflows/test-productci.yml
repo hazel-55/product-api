@@ -67,7 +67,7 @@ jobs:
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               pid: 'CI001',
-              pname: 'San pham test',
+              pname: 'San pham demo',
               price: 100000,
               quantity: 2
             })
